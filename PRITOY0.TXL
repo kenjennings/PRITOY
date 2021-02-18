@@ -1,0 +1,341 @@
+1000 Rem SIMPLE TOOL TO PLAY WITH GPRIOR
+1010 Rem SAVE "D2:PRITOY0.BXL"
+1020 Rem 1 CYCLES GTIA COLOR MODE
+1030 Rem 2 SETS MULTI-COLOR
+1040 Rem 3 SETS FIFTH PLAYER
+1050 Rem 4/5/6/7 SETS PRIORITY BIT
+1060 Rem SPACE CHOOSE PLAYER/MISSILE
+1070 Rem CURSOR LEFT/RIGHT PLAYER/MISSILE POSITION
+1080 Rem CURSOR UP/DOWN PLAYER/MISSILE COLOR
+1090 Rem ESCAPE DISPLAYS HELP.
+1100 Rem 
+1110 Fast 
+1120 Rem 
+1130 Rem CONVERT ROM CHARS TO PIXEL BLOCKS.
+1140 Rem 
+1150 Dim E000$(32*18+1):Rem PIXEL-IZE 0-F, M, P
+1160 E000$(577)=" ":Zaddr=Adr(E000$)
+1170 Maddr=Zaddr+(32*16)+1:Paddr=Maddr+32
+1180 Outaddr=Zaddr
+1190 Rem 0 TO 9
+1200   For I=16 To 25:? "...";I-16
+1210   Inaddr=$e000+(I*8)
+1220   Gosub 4110:Outaddr=Outaddr+32
+1230   Next I
+1240 Rem A TO F
+1250   For I=33 To 38:? "...";Chr$(65+(I-33))
+1260   Inaddr=$e000+(I*8)
+1270   Gosub 4110:Outaddr=Outaddr+32
+1280   Next I
+1290 Rem M AND P
+1300 ? "...M":Inaddr=$e000+(45*8):Outaddr=Maddr:Gosub 4110
+1310 ? "...P":Inaddr=$e000+(48*8):Outaddr=Paddr:Gosub 4110
+1320 Dim Pmg(7,4):Rem 8X3 FOR HPOS REG, COLOR REG, AND CURRENT POSITION
+1330 Let Cpm=0:Rem CURRENT P/M
+1340 Dim Gm(3,2):Rem 4X3 FOR GTIA COLOR MODE, COLBK0, COLPM0
+1350 Cgm=0:Rem CURRENT GTIA COLOR MODE
+1360 Mcp=$00:Rem MULTI-COLOR PLAYER, $00/$20
+1370 Fpl=$00:Rem FIFTH-PLAYER, $00/$10
+1380 Pb8=$00:Rem PRIORITY BIT 8. $00/$08
+1390 Pb4=$00:Rem PRIORITY BIT 4. $00/$04
+1400 Pb2=$00:Rem PRIORITY BIT 2. $00/$02
+1410 Pb1=$00:Rem PRIORITY BIT 1. $00/$01
+1420 Restore 1450
+1430   For I=0 To 3:Read Gm(I,0),Gm(I,1),Gm(I,2):Next I
+1440 Rem GTIA COLOR MODE, COLBK, COLPM0
+1450 Data $00,$00,$22
+1460 Data $40,$00,$22
+1470 Data $80,$22,$00
+1480 Data $C0,$08,$22
+1490 Gosub 2430:Rem HELP/TITLE
+1500 Gosub 2020:Rem PRIOR TOY
+1510 Goto 1490
+1520 Rem 
+1530 Rem SET UP A FEW CUSTOM CHARACTERS
+1540 Rem 
+1550 Poke 756,Cs/256:Move $e000,Cs,$0400
+1560   For I=0 To 6 Step 2
+1570   Dpoke Cs+(33*8)+I,$aa55
+1580   Dpoke Cs+(34*8)+I,$cc33
+1590   Dpoke Cs+(35*8)+I,$ffff
+1600   Next I
+1610 Return 
+1620 Rem 
+1630 Rem MOVE PLAYER/MISSILE
+1640 Rem 
+1650   If Pm:Poke Pmg(Cpm,0),Pmg(Cpm,3)
+1660   Else :Poke Pmg(Cpm,0),0
+1670   Endif 
+1680 Return 
+1690 Rem 
+1700 Rem SET PLAYER/MISSILE COLOR
+1710 Rem 
+1720   If (Fpl):Poke Pmg(Cpm,2),Cl
+1721   Else :Poke Pmg(Cpm,1),Cl
+1722   Endif 
+1730 Return 
+1740 Rem 
+1750 Rem CLEAR/SETUP PM GRAPHICS
+1760 Rem 
+1770 Restore 1910
+1780   For Cpm=0 To 7
+1790   Read Hr,Cr1,Cr2,Hp,Cl
+1800   Pmg(Cpm,0)=Hr:Pmg(Cpm,1)=Cr1:Pmg(Cpm,2)=Cr1:Pmg(Cpm,3)=Hp
+1810   Gosub 1650:Gosub 1720
+1820   Next Cpm
+1830   For I=0 To 4
+1840   Poke $d00d+I,$ff:Rem GRAF*
+1850   Poke $d008+I,$ff:Rem SIZE*
+1860   Next I
+1870 Let Cpm=0:Poke $d01d,0
+1880 Return 
+1890 Rem PM SETUP DATA
+1900 Rem HPOSREG,COLORREG1,COLORREG2,HPOS,COLOR
+1910 Data $D000,$02C0,$02C0,$30,$22
+1920 Data $D001,$02C1,$02C1,$48,$42
+1930 Data $D002,$02C2,$02C2,$60,$62
+1940 Data $D003,$02C3,$02C3,$78,$82
+1950 Data $D004,$02C0,$02C7,$C2,$22
+1960 Data $D005,$02C1,$02C7,$BC,$42
+1970 Data $D006,$02C2,$02C7,$B6,$62
+1980 Data $D007,$02C3,$02C7,$B0,$82
+1990 Rem 
+2000 Rem SETUP GRAPHICS FOR THE TOY.
+2010 Rem 
+2020 Graphics 24:Poke 559,0
+2030 Dl=Dpeek(560):Sm=Dpeek(88):Cs=((Peek(561)&$c0)-4)*256
+2040 Dpoke Dl+145,Dl:Poke Dl+144,65
+2050 Dpoke Dl+142,$0202
+2060 Poke Dl+141,$30
+2070 Dpoke Dl+139,$0606:Dpoke Dl+137,$0606
+2080 Poke Dl+136,$30
+2090 Dpoke Dl+101,Dpeek(Dl+100)
+2100 Poke Dl+100,$4f
+2110 Poke Dl+99,$0f
+2120 Poke Dl+13,$30
+2130 Poke Dl+2,$30
+2140 Poke 559,34
+2150   For C=0 To 15
+2160   Poke Sm+(C*320),C+(C*16)
+2170   Move Sm+(C*320),Sm+(C*320)+1,319
+2180   Next C
+2190 Rem COLOR 1:PLOT 0,0:DRAWTO 319,127:DRAWTO 0,127:DRAWTO 319,0:DRAWTO 0,0
+2200 Dpoke 88,Sm+(128*40):Poke 87,1
+2210 Position 0,0:? #6;"PF0 A B C A B C A B"
+2220 Position 0,1:? #6;"pf  a b c a b c a b"
+2230 Position 0,2:? #6;"ÐÆ² Á Â Ã Á Â Ã Á Â"
+2240 Position 0,3:? #6;"ðæ“  á â ã á â ã á â"
+2250 Dpoke 88,Sm+(130*40):Poke 87,0
+2260 Position 0,0:? #6;"PF2 A B   Á Â   A B   Á Â   A B   Á Â  ";
+2270 Position 0,1:? #6;"PF2  A B   Á Â   A B   Á Â   A B   Á Â";
+2280 Gosub 1550:Rem CUSTOM CHARACTERS
+2290 Pm=1:Gosub 1770:Rem PM GRAPHICS
+2300 Rem UPDATE VALUE INDICATORS
+2310 Gosub 2900:Gosub 3000:Gosub 3120:Gosub 3470:Gosub 3580
+2320 Gosub 2600:Rem WAIT FOR A KEY
+2330   If (Key<>255):Gosub 2670
+2340   Else :Ch=0
+2350   Endif 
+2360 If (Ch=99) Then Return :Rem ESCAPE
+2370 On Ch Gosub 2850,2970,3090,3210,3280,3350,3420,3550,3720,3820,3920,4000
+2380 Poke $026f,Gm(Cgm,0)!Mcp!Fpl!Pb8!Pb4!Pb2!Pb1
+2390 Goto 2320
+2400 Rem 
+2410 Rem DISPLAY HELP/DIRECTIONS
+2420 Rem 
+2430 Poke 82,0:Graphics 0:Poke 710,0
+2440 Pm=0:Gosub 1770
+2450 ? "GTIA PRIOR TOY. Prototype Version Zero."
+2460 ? :? "1Sets GTIA Color Mode"
+2470 ? :? "2Multi-Color Player"
+2480 ? :? "3Fifth Player"
+2490 ? :? "4567Sets Priority bit 8 4 2 1"
+2500 ? :? "SpaceChoose Player/Missile"
+2510 ? :? " Player/Missile position"
+2520 ? :? " Player/Missile color"
+2530 ? :? "Display Help/Reset PMs"
+2540 Gosub 2590
+2550 Return 
+2560 Rem 
+2570 Rem WAIT FOR A KEY
+2580 Rem 
+2590 ? :? "Press a key to continue.";
+2600 Poke 764,255:Key=255
+2610   While (Key=255):Key=Peek(764):Endwhile 
+2620 Return 
+2630 Rem 
+2640 Rem CONVERT KEYCODE TO FUNCTION
+2650 Rem INPUT=KEY OUTPUT=CH
+2660 Rem 
+2670 Ch=0:If (Key=255) Then Return 
+2680 If (Key=31) Then Ch=1:Return :Rem 1
+2690 If (Key=30) Then Ch=2:Return :Rem 2
+2700 If (Key=26) Then Ch=3:Return :Rem 3
+2710 If (Key=24) Then Ch=4:Return :Rem 4
+2720 If (Key=29) Then Ch=5:Return :Rem 5
+2730 If (Key=27) Then Ch=6:Return :Rem 6
+2740 If (Key=51) Then Ch=7:Return :Rem 7
+2750 If (Key=33) Then Ch=8:Return :Rem SPACE
+2760 If (Key=142) Then Ch=9:Rem UP ARROW
+2770 If (Key=143) Then Ch=10:Rem DOWN ARROW
+2780 If (Key=134) Then Ch=11:Rem LEFT ARROW
+2790 If (Key=135) Then Ch=12:Rem RIGHT ARROW
+2800 If (Key=28) Then Ch=99:Rem ESCAPE
+2810 Return 
+2820 Rem 
+2830 Rem 1 = NEXT GTIA MODE
+2840 Rem 
+2850 Ch=0
+2860 Cgm=Cgm+1:If (Cgm>3) Then Cgm=0
+2870 Rem HACK COLORS DUE TO MODE CHANGE
+2880 Poke $02c8,Gm(Cgm,1):Poke 704,Gm(Cgm,2)
+2890 Rem DRAW THE MODE CHARACTER
+2900 Chraddr=Zaddr+(Gm(Cgm,0)*32)
+2910 Pixaddr=Sm
+2920 Gosub 4310
+2930 Return 
+2940 Rem 
+2950 Rem 2 = MULTI-COLOR PLAYER TOGGLE
+2960 Rem 
+2970 Ch=0
+2980 Mcp=Mcp%$20
+2990 Rem DRAW THE MULTI-COLOR PLAYER FLAG
+3000   If (Mcp):Chraddr=Maddr
+3010   Else :Chraddr=Zaddr
+3020   Endif 
+3030 Pixaddr=Sm+8
+3040 Gosub 4310
+3050 Return 
+3060 Rem 
+3070 Rem 3 = FIFTH PLAYER TOGGLE
+3080 Rem 
+3090 Ch=0
+3100 Fpl=Fpl%$10
+3110 Rem DRAW THE FIFTH PLAYER FLAG
+3120   If (Fpl):Chraddr=Zaddr+(32*5)
+3130   Else :Chraddr=Zaddr
+3140   Endif 
+3150 Pixaddr=Sm+16
+3160 Gosub 4310
+3170 Return 
+3180 Rem 
+3190 Rem 4 = PRIOR BIT $08 TOGGLE
+3200 Rem 
+3210 Ch=0
+3220 Pb8=Pb8%$08
+3230 Gosub 3470
+3240 Return 
+3250 Rem 
+3260 Rem 5 = PRIOR BIT $04 TOGGLE
+3270 Rem 
+3280 Ch=0
+3290 Pb4=Pb4%$04
+3300 Gosub 3470
+3310 Return 
+3320 Rem 
+3330 Rem 6 = PRIOR BIT $02 TOGGLE
+3340 Rem 
+3350 Ch=0
+3360 Pb2=Pb2%$02
+3370 Gosub 3470
+3380 Return 
+3390 Rem 
+3400 Rem 7 = PRIOR BIT $01 TOGGLE
+3410 Rem 
+3420 Ch=0
+3430 Pb1=Pb1%$01
+3440 Gosub 3470
+3450 Return 
+3460 Rem DRAW THE COLLECTION OF PRIORITY BITS
+3470 Byte=Pb8!Pb4!Pb2!Pb1
+3480 Chraddr=Zaddr+(Byte*32)
+3490 Pixaddr=Sm+24
+3500 Gosub 4310
+3510 Return 
+3520 Rem 
+3530 Rem 8 = SPACE TO PICK NEXT PLAYER
+3540 Rem 
+3550 Ch=0
+3560 Let Cpm=Cpm+1
+3570 If (Cpm>7) Then Let Cpm=0
+3580   If (Cpm<4):Chraddr=Paddr
+3590   Else :Chraddr=Maddr
+3600   Endif 
+3610 Pixaddr=Sm+32
+3620 Gosub 4310
+3630   If (Cpm<=3):Chraddr=Zaddr+(Cpm*32)
+3640   Else :Chraddr=Zaddr+((Cpm-4)*32)
+3650   Endif 
+3660 Pixaddr=Sm+36
+3670 Gosub 4310
+3680 Return 
+3690 Rem 
+3700 Rem 9 = UP ARROW +COLOR
+3710 Rem 
+3720 Ch=0
+3730   If (Fpl):Cl=Peek(Pmg(Cpm,2))
+3731   Else :Cl=Peek(Pmg(Cpm,1))
+3732   Endif 
+3740   If (Cl<=254):Cl=Cl+2
+3750   Else :Cl=0
+3760   Endif 
+3770 Gosub 1720
+3780 Return 
+3790 Rem 
+3800 Rem 10 = DOWN ARROW -COLOR
+3810 Rem 
+3820 Ch=0
+3830   If (Fpl):Cl=Peek(Pmg(Cpm,2))
+3831   Else :Cl=Peek(Pmg(Cpm,1))
+3832   Endif 
+3840   If (Cl>=2):Cl=Cl-2
+3850   Else :Cl=254
+3860   Endif 
+3870 Gosub 1720
+3880 Return 
+3890 Rem 
+3900 Rem 11 = LEFT ARROW PLAYER -HPOS
+3910 Rem 
+3920 Ch=0
+3930 Pmg(Cpm,3)=Pmg(Cpm,3)-1
+3940 If (Pmg(Cpm,3)<40) Then Pmg(Cpm,3)=40
+3950 Gosub 1650
+3960 Return 
+3970 Rem 
+3980 Rem 12 = RIGHT ARROW PLAYER +HPOS
+3990 Rem 
+4000 Ch=0
+4010 Pmg(Cpm,3)=Pmg(Cpm,3)+1
+4020 If (Pmg(Cpm,3)>200) Then Pmg(Cpm,3)=200
+4030 Gosub 1650
+4040 Return 
+4050 Rem 
+4060 Rem CONVERT CHARACTERS 0-F, M, P FROM
+4070 Rem ROM TO GTIA PIXEL MEMORY AND BUFFER.
+4080 Rem INADDR=CHARACTER IN ROM (8 BYTES).
+4090 Rem OUTADDR=PIXEL MEMORY (32 BYTES).
+4100 Rem 
+4110 Pixout=Outaddr
+4120   For Byte=Inaddr To Inaddr+7
+4130   Cbyte=Peek(Byte)
+4140   B1=128:B2=64
+4150     For Bout=Pixout To Pixout+3
+4160     Boutx=0
+4170     If (Cbyte&B1) Then Boutx=$f0
+4180     If (Cbyte&B2) Then Boutx=Boutx!$0f
+4190     Poke Bout,Boutx
+4200     B1=B1/4:B2=B2/4
+4210     Next Bout
+4220   Pixout=Pixout+4
+4230   Next Byte
+4240 Return 
+4250 Rem 
+4260 Rem COPY BUFFERED CHARACTER BLOCK
+4270 Rem TO SCREEN MEMORY
+4280 Rem CHRADDR=CHARACTER BUFFER
+4290 Rem PIXADDR=START OF SCREEN MEM
+4300 Rem 
+4310   For Offset=0 To 28 Step 4
+4320   Move Chraddr+Offset,Pixaddr+(Offset*10),4
+4330   Next Offset
+4340 Return 
